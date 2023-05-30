@@ -1,0 +1,80 @@
+﻿@layout UserLayout
+@inject MessageService _msg
+@inject NavigationManager _navManager
+@page "/user/register"
+
+<div class="main__b__1">
+    <div class="register">
+        <h3>注册</h3>
+        <Form Model="@_model" OnFinish="HandleSubmit" ValidateOnChange="true" Loading="loading">
+
+            <FormItem Required>
+                <Input Placeholder="用户名" @bind-Value="@context.UserName" Size="@InputSize.Large"></Input>
+            </FormItem>
+
+            <FormItem Required>
+                <Input Placeholder="密码" @bind-Value="@context.Password" Size="@InputSize.Large" Type="password"></Input>
+            </FormItem>
+
+            <FormItem>
+                <Input Placeholder="确定密码" @bind-Value="@context.ConfirmPassword" Size="@InputSize.Large" Type="password"></Input>
+            </FormItem>
+            <FormItem>
+                <AntDesign.Input Placeholder="手机号" @bind-Value="@context.Phone"></AntDesign.Input>
+            </FormItem>
+
+            <FormItem>
+                <FormItem>
+                    <Row Gutter="8">
+                        <AntDesign.Col Span="16">
+                            <AntDesign.Input Placeholder="验证码" @bind-Value="@context.Captcha" Size="@InputSize.Large"></AntDesign.Input>
+                        </AntDesign.Col>
+                        <AntDesign.Col Span="8">
+                            <Button Size="large" Block>获取验证码</Button>
+                        </AntDesign.Col>
+                    </Row>
+                </FormItem>
+            </FormItem>
+
+            <FormItem>
+                <Button Type="primary" Size="large" class="submit" HtmlType="submit">注册</Button>
+                <a class="login" href="/user/login">已存在账户登录</a>
+            </FormItem>
+        </Form>
+    </div>
+</div>
+
+@code {
+    private readonly RegisterDto _model = new RegisterDto();
+
+    private bool loading;
+
+    public async Task HandleSubmit()
+    {
+        loading = true;
+        StateHasChanged();
+        await Task.Delay(100);
+        //var user = new IdentityUser { UserName = _model.UserName, PhoneNumber = _model.Phone };
+        //var result = await _userManager.CreateAsync(user, _model.ConfirmPassword);
+
+
+        //loading = false;
+        //StateHasChanged();
+        //if (result.Succeeded)
+        //{
+        //    await _msg.Success("注册成功").ContinueWith(r =>
+        //    {
+        //        _navManager.NavigateTo("/user/login");
+        //    });
+        //}
+        //else
+        //{
+        //    await _msg.Error(string.Join(",", result.Errors.Select(t => t.Description)));
+        //}
+    }
+
+    public void GetCaptcha()
+    {
+
+    }
+}

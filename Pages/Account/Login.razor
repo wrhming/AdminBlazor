@@ -1,0 +1,76 @@
+﻿@layout UserLayout
+@inject UserAccountService userAccountService
+@inject IMessageService _msg;
+@inject NavigationManager _navManager;
+@inject AuthenticationStateProvider authStateProvider
+@page "/user/login"
+
+<div class="main__b__0">
+    <div class="login">
+        <Form Model="@_model" OnFinish="HandleSubmit" Loading="loading">
+            <FormItem>
+                <AntDesign.Input Placeholder="请输入用户名" Size="large" @bind-Value="@context.UserName">
+                    <Prefix><Icon Type="user" /></Prefix>
+                </AntDesign.Input>
+            </FormItem>
+            <FormItem>
+                <AntDesign.Input Placeholder="请输入密码" Size="large" @bind-Value="@context.Password" Type="password">
+                    <Prefix><Icon Type="lock" /></Prefix>
+                </AntDesign.Input>
+            </FormItem>
+            <div>
+                <Checkbox Checked="@context.AutoLogin">
+                    自动登录
+                </Checkbox>
+            </div>
+            <Button Type="primary" HtmlType="submit" Class="submit" Size="large" Block>登录</Button>
+            <div class="other">
+                <a class="register" href="/user/register">注册账户</a>
+            </div>
+        </Form>
+        <Switch Checked=loading OnChange=toggle />
+    </div>
+</div>
+
+@code {
+    private readonly LoginDto _model = new LoginDto();
+
+    bool loading = false;
+    void toggle(bool value) => loading = value;
+    public async Task HandleSubmit()
+    {
+        //异步需要更新页面状态
+        loading = true;
+        StateHasChanged();
+        await Task.Delay(100);
+
+
+        loading = false;
+        StateHasChanged();
+
+        var userAccount = await userAccountService.GetUserName(_model.UserName);
+        if (userAccount == null || userAccount.Password != _model.Password)
+        {
+            await _msg.Error("登录失败");
+        }
+        else
+        {
+            var customAuthStateProvider = (CustomAuthenticationStateProvider)authStateProvider;
+
+            await customAuthStateProvider.UpdateAuthenticationState(new UserSession
+                {
+                    UserName = userAccount.UserName,
+                    Role = userAccount.Role.RoleName,
+                });
+            await _msg.Success("登录成功").ContinueWith(r =>
+           {
+               _navManager.NavigateTo("/", true);
+           });
+        }
+    }
+
+    public void GetCaptcha()
+    {
+
+    }
+}
