@@ -52,5 +52,6 @@ namespace AdminBlazor.Authentication
 
             return role.Permissions.Select(t=>t.PermissionName).ToList();
         }
+
     }
 }

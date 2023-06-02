@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using AntDesign.ProLayout;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace AdminBlazor.Authentication
 {
@@ -29,8 +31,8 @@ namespace AdminBlazor.Authentication
                             Name = "修改",
                         },
                         new Permission{
-                            Key = PermissionNames.RoleRead,
-                            Name = "查询",
+                            Key = PermissionNames.RoleAuth,
+                            Name = "权限",
                         },
                     }
                 },
@@ -54,16 +56,12 @@ namespace AdminBlazor.Authentication
                             Key = PermissionNames.UserUpdate,
                             Name = "修改",
                         },
-                        new Permission{
-                            Key = PermissionNames.UserRead,
-                            Name = "查询",
-                        },
                     }
                 }
             };
         }
 
-        public static List<string> GetPermissionNames(List<Permission> permissions) 
+        public static List<string> GetPermissionNames(List<Permission> permissions)
         {
             var list = new List<string>();
 
@@ -71,8 +69,46 @@ namespace AdminBlazor.Authentication
             {
                 list.Add(item.Key);
 
-                if (item.Children != null) {
+                if (item.Children != null)
+                {
                     list.AddRange(GetPermissionNames(item.Children));
+                }
+            }
+
+            return list;
+        }
+
+        /// <summary>
+        /// 根据角色权限获得菜单
+        /// </summary>
+        /// <param name="permissions">所有权限</param>
+        /// <param name="rolePermissions">角色权限</param>
+        /// <returns></returns>
+        public static List<MenuDataItem> GetMenus(List<Permission> permissions,List<string> rolePermissions)
+        {
+
+            var list = new List<MenuDataItem>();
+
+            foreach (var item in permissions)
+            {
+                if(item.IsMenu && rolePermissions.Any(t=>t == item.Key))
+                {
+                    var model = new MenuDataItem
+                    {
+                        Key = item.Key,
+                        Name = item.Name,
+                        Path= item.Path,
+                        Icon= item.Icon,
+                    };
+                    if (item.Children != null)
+                    {
+                        var children = GetMenus(item.Children, rolePermissions).ToArray();
+                        if(children!= null && children.Length> 0)
+                        {
+                            model.Children = children;
+                        }
+                    }
+                    list.Add(model);
                 }
             }
 

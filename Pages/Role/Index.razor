@@ -1,0 +1,142 @@
+﻿@*@attribute [Authorize(Policy = PermissionNames.Role)]*@
+@page "/Role/Index"
+
+@using System.ComponentModel
+@using AntDesign.TableModels
+@using System.Text.Json
+@using Microsoft.EntityFrameworkCore;
+@inject ApplicationDbContext _dbContext;
+@inject IMessageService _msg;
+
+<PageContainer Title="角色管理">
+    <Content>
+        <span>角色权限分配以及管理</span>
+    </Content>
+    <ChildContent>
+        <Table @ref="table"
+           TItem="RoleViewModel"
+           DataSource="@roles"
+           Total="_total"
+           @bind-PageIndex="_pageIndex"
+           @bind-PageSize="_pageSize"
+           OnChange="OnChange">
+
+            <TitleTemplate>
+                <GridRow Justify="end">
+                    <Button Type="@ButtonType.Primary" Icon="@IconType.Outline.Plus">添加</Button>
+                    <Button Type="@ButtonType.Link" Icon="@IconType.Outline.Reload"></Button>
+                </GridRow>
+            </TitleTemplate>
+            <RowTemplate>
+                <PropertyColumn Property="c=>c.Id" /><PropertyColumn Property="c=>c.DisplayName" />
+                <PropertyColumn Property="c=>c.RoleName" />
+                <ActionColumn Title="操作">
+                    <Space>
+                        <SpaceItem>
+                            @*<AuthorizeView Context="authContext" Policy="@PermissionNames.Role">
+                                <Button Type="@ButtonType.Link" OnClick="()=>Delete(context.Id)">修改</Button>
+                            </AuthorizeView>
+                            <AuthorizeView Context="authContext" Policy="@PermissionNames.Role">
+                                <Popconfirm Title="你确定删除吗?" OkText="确定" CancelText="取消"
+                                            OnConfirm="()=>Delete(context.Id)">
+                                    <Button Type="@ButtonType.Link" Disabled="(context.RoleName == AdminName)">删除</Button>
+                                </Popconfirm>
+                            </AuthorizeView>
+                            <AuthorizeView Context="authContext" Policy="@PermissionNames.Role">
+                                <Button Type="@ButtonType.Link" Danger OnClick="()=>Delete(context.Id)">权限</Button>
+                            </AuthorizeView>*@
+
+                            <Popconfirm Title="你确定删除吗?" OkText="确定" CancelText="取消"
+                                        OnConfirm="()=>Delete(context.Id)">
+                                <Button Type="@ButtonType.Link" Disabled="(context.RoleName == AdminName)">删除</Button>
+                            </Popconfirm>
+                        </SpaceItem>
+                    </Space>
+                </ActionColumn>
+            </RowTemplate>
+        
+    </Table>
+    </ChildContent>
+</PageContainer>
+
+@code {
+    List<RoleViewModel> roles;
+
+    ITable table;
+
+    int _pageIndex = 1;
+    int _pageSize = 10;
+    int _total = 0;
+
+    string AdminName = "Admin";
+
+    protected override async Task OnInitializedAsync()
+    {
+        roles = await GetRoleDataAsync(_pageIndex,_pageSize);
+    }
+
+    public async Task OnChange(QueryModel<RoleViewModel> queryModel)
+    {
+        roles = await GetRoleDataAsync(queryModel.PageIndex, queryModel.PageSize);
+    }
+
+    public class RoleViewModel
+    {
+        public int Id { get; set; }
+
+        /// <summary>
+        /// 显示名字
+        /// </summary>
+        [DisplayName("显示名字")]
+        public string DisplayName { get; set; }
+
+        [DisplayName("角色")]
+        public string RoleName { get; set; }
+    }
+
+    public async Task<List<RoleViewModel>> GetRoleDataAsync(int pageIndex,int pageSize)
+    {
+        var query = _dbContext.SysRole.AsQueryable();
+
+        _total = await query.CountAsync();
+
+        var data = await query.Skip((pageIndex - 1) * pageSize).Take(pageSize).Select(t => new RoleViewModel
+
+            {
+                Id = t.Id,
+                DisplayName = t.DisplayName,
+                RoleName = t.RoleName
+            }).ToListAsync();
+
+        return data;
+    }
+
+    public void RemoveSelection(int id)
+    {
+        //var selected = selectedRows.Where(x => x.Id != id);
+        //selectedRows = selected;
+    }
+
+    [Authorize(Policy = PermissionNames.RoleDelete)]
+    public async Task Delete(int id)
+    {
+        var model = await _dbContext.SysRole.FirstOrDefaultAsync(t=>t.Id == id);
+
+        if(model == null)
+        {
+            await _msg.Error("未查找到角色");
+            return;
+        }
+        var isExistUser = await _dbContext.SysUser.AnyAsync(t=>t.RoleId == model.Id);
+        if (isExistUser)
+        {
+            await _msg.Error("已有用户分配角色不能删除");
+            return;
+        }
+
+        //_dbContext.SysRole.Remove(model);
+        //await _dbContext.SaveChangesAsync();
+
+        //roles = await GetRoleDataAsync(_pageIndex, _pageSize);
+    }
+}

@@ -3,9 +3,10 @@
 @inherits LayoutComponentBase
 @inject ProtectedSessionStorage _sessionStorage
 @inject NavigationManager _navigationManager
+@inject UserAccountService _user;
 
 <AntDesign.ProLayout.BasicLayout Logo="@("https://gw.alipayobjects.com/zos/rmsportal/KDpgvguMpGfqaHPjicRK.svg")"
-                                 MenuData="_menuData">
+                                 MenuData="_menuData.ToArray()">
     <RightContentRender>
 
     </RightContentRender>
@@ -23,7 +24,7 @@
     [CascadingParameter]
     private Task<AuthenticationState> authenticationState { get; set; }
 
-    private  MenuDataItem[] _menuData =
+    private List<MenuDataItem> _menuData = new List<MenuDataItem>
     {
         new MenuDataItem
         {
@@ -31,41 +32,28 @@
             Name = "welcome",
             Key = "welcome",
             Icon = "smile",
-        },
-        new MenuDataItem
-        {
-            Path = "/role/index",
-            Name = "角色管理",
-            Key = "role",
-            Icon = "team",
-        },
-        new MenuDataItem
-        {
-            Path = "/user/index",
-            Name = "用户管理",
-            Key = "user",
-            Icon = "user",
         }
     };
 
 
-    private async Task<bool> IsInRole(string role)
-    {
-        var authState = await authenticationState;
-
-        return authState.User.IsInRole(role);
-    }
-
     protected override async Task OnInitializedAsync()
     {
-
         var userSessionStorageResult = await _sessionStorage.GetAsync<UserSession>("UserSession");
         if (userSessionStorageResult.Success == false || userSessionStorageResult.Value == null)
         {
             _navigationManager.NavigateTo("/user/login");
+            return;
         }
-    }
 
+        var role = userSessionStorageResult.Value.Role;
+        List<string> rolePermissions = Permissions.GetPermissionNames(Permissions.GetPermissions());
+        if (role != "Admin")
+        {
+            rolePermissions = await _user.GetPermissions(role);
+        }
+
+        _menuData.AddRange(Permissions.GetMenus(Permissions.GetPermissions(), rolePermissions));
+    }
 
     public LinkItem[] Links { get; set; } =
     {
