@@ -42,7 +42,7 @@ namespace AdminBlazor.Authentication
             var role = query.Include(t=>t.Permissions).FirstOrDefault();
             if (role == null) return false;
 
-            return role.Permissions.Any(p => permissionName.Equals(p.PermissionName));
+            return role.Permissions.Any(p => permissionName.StartsWith(p.PermissionName));
         }
 
         public async Task<List<string>> GetPermissions(string roleName) 

@@ -61,6 +61,7 @@
                 {
                     UserName = userAccount.UserName,
                     Role = userAccount.Role.RoleName,
+                    Permissions =string.Join(",",await userAccountService.GetPermissions(userAccount.Role.RoleName))
                 });
             await _msg.Success("登录成功").ContinueWith(r =>
            {

@@ -1,4 +1,4 @@
-﻿@*@attribute [Authorize(Policy = PermissionNames.Role)]*@
+﻿@attribute [Authorize(Policy = PermissionNames.Role)]
 @page "/Role/Index"
 
 @using System.ComponentModel
@@ -7,6 +7,7 @@
 @using Microsoft.EntityFrameworkCore;
 @inject ApplicationDbContext _dbContext;
 @inject IMessageService _msg;
+@inject UserAccountService _user;
 
 <PageContainer Title="角色管理">
     <Content>
@@ -14,16 +15,16 @@
     </Content>
     <ChildContent>
         <Table @ref="table"
-           TItem="RoleViewModel"
-           DataSource="@roles"
-           Total="_total"
-           @bind-PageIndex="_pageIndex"
-           @bind-PageSize="_pageSize"
-           OnChange="OnChange">
+               TItem="RoleDto"
+               DataSource="@roles"
+               Total="_total"
+               @bind-PageIndex="_pageIndex"
+               @bind-PageSize="_pageSize"
+               OnChange="OnChange">
 
             <TitleTemplate>
                 <GridRow Justify="end">
-                    <Button Type="@ButtonType.Primary" Icon="@IconType.Outline.Plus">添加</Button>
+                    <Button Type="@ButtonType.Primary" Icon="@IconType.Outline.Plus" OnClick="HandleAdd">添加</Button>
                     <Button Type="@ButtonType.Link" Icon="@IconType.Outline.Reload"></Button>
                 </GridRow>
             </TitleTemplate>
@@ -34,17 +35,22 @@
                     <Space>
                         <SpaceItem>
                             @*<AuthorizeView Context="authContext" Policy="@PermissionNames.Role">
-                                <Button Type="@ButtonType.Link" OnClick="()=>Delete(context.Id)">修改</Button>
+                            <Button Type="@ButtonType.Link" OnClick="()=>Delete(context.Id)">修改</Button>
                             </AuthorizeView>
                             <AuthorizeView Context="authContext" Policy="@PermissionNames.Role">
-                                <Popconfirm Title="你确定删除吗?" OkText="确定" CancelText="取消"
-                                            OnConfirm="()=>Delete(context.Id)">
-                                    <Button Type="@ButtonType.Link" Disabled="(context.RoleName == AdminName)">删除</Button>
-                                </Popconfirm>
+                            <Popconfirm Title="你确定删除吗?" OkText="确定" CancelText="取消"
+                            OnConfirm="()=>Delete(context.Id)">
+                            <Button Type="@ButtonType.Link" Disabled="(context.RoleName == AdminName)">删除</Button>
+                            </Popconfirm>
                             </AuthorizeView>
                             <AuthorizeView Context="authContext" Policy="@PermissionNames.Role">
+                            <Button Type="@ButtonType.Link" Danger OnClick="()=>Delete(context.Id)">权限</Button>
+                            </AuthorizeView>*@
+
+                           @* <AuthorizeView Context="authContext" Policy="@PermissionNames.RoleAuth">
                                 <Button Type="@ButtonType.Link" Danger OnClick="()=>Delete(context.Id)">权限</Button>
                             </AuthorizeView>*@
+                            <Button Type="@ButtonType.Link" OnClick="()=>HandelEdit(context.Id)">修改</Button>
 
                             <Popconfirm Title="你确定删除吗?" OkText="确定" CancelText="取消"
                                         OnConfirm="()=>Delete(context.Id)">
@@ -54,13 +60,73 @@
                     </Space>
                 </ActionColumn>
             </RowTemplate>
-        
-    </Table>
+
+        </Table>
     </ChildContent>
 </PageContainer>
 
+
+
+<Modal Visible="modalVisible"
+       OnCancel="()=>{modalVisible = false;}"
+       OnOk="HandleOK">
+    <Tabs DefaultActiveKey="1">
+        <TabPane Key="1">
+            <TabTemplate>基本信息</TabTemplate>
+            <ChildContent>
+                <Form Model="@createRoleDto"
+                      LabelColSpan="4"
+                      WrapperColSpan="20"
+                @ref="@_form">
+                    <FormItem Label="关键字">
+                        <Input @bind-Value="@context.RoleName" />
+                    </FormItem>
+                    <FormItem Label="名称">
+                        <Input @bind-Value="@context.DisplayName" />
+                    </FormItem>
+                </Form>
+
+            </ChildContent>
+        </TabPane>
+        <TabPane Key="2">
+            <TabTemplate>权限</TabTemplate>
+            <ChildContent>
+                <Tree TItem="string" Checkable DefaultExpandAll="true"
+                @ref="_tree"
+                      DefaultCheckedKeys="createRoleDto.Permissions?.ToArray()">
+                    @foreach (var item in permissions)
+                    {
+                        <TreeNode Title="@item.Name" Key="@item.Key" TItem="string">
+                            @foreach (var firstChild in item?.Children)
+                            {
+                                <TreeNode Title="@firstChild.Name" Key="@firstChild.Key" TItem="string">
+                                    @if (firstChild.Children != null)
+                                    {
+                                        foreach (var secondChild in firstChild?.Children)
+                                        {
+                                            <TreeNode Title="@secondChild.Name" Key="@secondChild.Key" TItem="string"></TreeNode>
+                                        }
+                                    }
+                                </TreeNode>
+                            }
+                        </TreeNode>
+                    }
+                </Tree>
+
+            </ChildContent>
+        </TabPane>
+    </Tabs>
+</Modal>
+
 @code {
-    List<RoleViewModel> roles;
+    List<RoleDto> roles;
+
+    //菜单权限
+    List<Permission> permissions = Permissions.GetPermissions();
+    bool modalVisible = false;
+    //添加角色
+    CreateRoleDto createRoleDto = new CreateRoleDto();
+
 
     ITable table;
 
@@ -69,18 +135,84 @@
     int _total = 0;
 
     string AdminName = "Admin";
+    private Form<CreateRoleDto> _form;
+    Tree<string> _tree;
 
     protected override async Task OnInitializedAsync()
     {
-        roles = await GetRoleDataAsync(_pageIndex,_pageSize);
+        roles = await GetRoleDataAsync(_pageIndex, _pageSize);
     }
 
-    public async Task OnChange(QueryModel<RoleViewModel> queryModel)
+    public async Task OnChange(QueryModel<RoleDto> queryModel)
     {
         roles = await GetRoleDataAsync(queryModel.PageIndex, queryModel.PageSize);
     }
 
-    public class RoleViewModel
+    public void HandleAdd()
+    {
+        modalVisible = true;
+        createRoleDto = new CreateRoleDto();
+    }
+    public async Task HandelEdit(int id)
+    {
+        modalVisible = true;
+        createRoleDto = new CreateRoleDto();
+
+        var role = await _dbContext.SysRole.Where(t => t.Id == id).Include(t => t.Permissions).FirstOrDefaultAsync();
+
+        createRoleDto = new CreateRoleDto
+            {
+                DisplayName = role.DisplayName,
+                Id = role.Id,
+                RoleName = role.RoleName,
+                Permissions = role.Permissions.Select(t => t.PermissionName).ToList(),
+            };
+    }
+
+    public async void HandleOK(MouseEventArgs e)
+    {
+        modalVisible = false;
+        StateHasChanged();
+        var model = _form.Model;
+        model.Permissions = _tree.CheckedKeys.ToList();
+
+        if (model.Id > 0)
+        {
+            //修改
+            var role = await _dbContext.SysRole.FirstOrDefaultAsync(t => t.Id == model.Id);
+            role.RoleName = model.RoleName;
+            role.DisplayName = model.DisplayName;
+            _dbContext.SysRolePermissions.RemoveRange(role.Permissions);
+            role.Permissions = model.Permissions.Select(t => new SysRolePermissions
+                {
+                    RoleId = role.Id,
+                    PermissionName = t
+                }).ToList();
+
+            await _dbContext.SaveChangesAsync();
+            await _msg.Success("修改成功");
+        }
+        else
+        {
+            var role = _dbContext.SysRole.Add(new SysRole
+                {
+                    DisplayName = model.DisplayName,
+                    RoleName = model.RoleName,
+                });
+
+            await _dbContext.SaveChangesAsync();
+            role.Entity.Permissions = model.Permissions.Select(t => new SysRolePermissions
+                {
+                    RoleId = role.Entity.Id,
+                    PermissionName = t
+                }).ToList();
+
+            await _dbContext.SaveChangesAsync(); 
+            await _msg.Success("添加成功");
+        }
+    }
+
+    public class RoleDto
     {
         public int Id { get; set; }
 
@@ -94,13 +226,34 @@
         public string RoleName { get; set; }
     }
 
-    public async Task<List<RoleViewModel>> GetRoleDataAsync(int pageIndex,int pageSize)
+    /// <summary>
+    /// 创建修改角色
+    /// </summary>
+    public class CreateRoleDto
     {
-        var query = _dbContext.SysRole.AsQueryable();
+        public int Id { get; set; }
+
+        /// <summary>
+        /// 显示名字
+        /// </summary>
+        [DisplayName("显示名字")]
+        public string DisplayName { get; set; }
+
+        [DisplayName("角色")]
+        public string RoleName { get; set; }
+        /// <summary>
+        /// 所选权限
+        /// </summary>
+        public List<string> Permissions { get; set; }
+    }
+
+    public async Task<List<RoleDto>> GetRoleDataAsync(int pageIndex, int pageSize)
+    {
+        var query = _dbContext.SysRole.OrderByDescending(t => t.Id);
 
         _total = await query.CountAsync();
 
-        var data = await query.Skip((pageIndex - 1) * pageSize).Take(pageSize).Select(t => new RoleViewModel
+        var data = await query.Skip((pageIndex - 1) * pageSize).Take(pageSize).Select(t => new RoleDto
 
             {
                 Id = t.Id,
@@ -111,32 +264,25 @@
         return data;
     }
 
-    public void RemoveSelection(int id)
-    {
-        //var selected = selectedRows.Where(x => x.Id != id);
-        //selectedRows = selected;
-    }
-
-    [Authorize(Policy = PermissionNames.RoleDelete)]
     public async Task Delete(int id)
     {
-        var model = await _dbContext.SysRole.FirstOrDefaultAsync(t=>t.Id == id);
+        var model = await _dbContext.SysRole.FirstOrDefaultAsync(t => t.Id == id);
 
-        if(model == null)
+        if (model == null)
         {
             await _msg.Error("未查找到角色");
             return;
         }
-        var isExistUser = await _dbContext.SysUser.AnyAsync(t=>t.RoleId == model.Id);
+        var isExistUser = await _dbContext.SysUser.AnyAsync(t => t.RoleId == model.Id);
         if (isExistUser)
         {
             await _msg.Error("已有用户分配角色不能删除");
             return;
         }
 
-        //_dbContext.SysRole.Remove(model);
-        //await _dbContext.SaveChangesAsync();
+        _dbContext.SysRole.Remove(model);
+        await _dbContext.SaveChangesAsync();
 
-        //roles = await GetRoleDataAsync(_pageIndex, _pageSize);
+        roles = await GetRoleDataAsync(_pageIndex, _pageSize);
     }
 }

@@ -36,9 +36,10 @@ namespace AdminBlazor
 
             services.AddRazorPages();
             //ÏÔÊ¾´íÎóÏêÏ¸´íÎóÐÅÏ¢ AddCircuitOptions(options => { options.DetailedErrors = true; })
-            services.AddServerSideBlazor().AddCircuitOptions(options => { options.DetailedErrors = true; });
-            services.AddAntDesign();
+            //services.AddServerSideBlazor().AddCircuitOptions(options => { options.DetailedErrors = true; });
 
+            services.AddServerSideBlazor(); 
+            services.AddAntDesign();
 
             services.AddScoped<ProtectedSessionStorage>();
             services.AddScoped<AuthenticationStateProvider, CustomAuthenticationStateProvider>();

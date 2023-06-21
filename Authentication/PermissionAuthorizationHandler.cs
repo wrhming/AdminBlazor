@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
+using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 
@@ -27,7 +28,15 @@ namespace AdminBlazor.Authentication
                     var userIdClaim = context.User.FindFirst(_ => _.Type == ClaimTypes.Role);
                     if (userIdClaim != null)
                     {
-                        if (_user.CheckPermission(userIdClaim.Value, requirement.Name))
+                        var permissions = context.User.FindFirst(_ => _.Type == ClaimTypes.Authentication);
+                        //if (_user.CheckPermission(userIdClaim.Value, requirement.Name))
+                        //{
+                        //    context.Succeed(requirement);
+                        //}
+
+                        var rolePermissions = permissions.Value.Split(',');
+
+                        if (rolePermissions.Any(t=> t.StartsWith(requirement.Name)))
                         {
                             context.Succeed(requirement);
                         }

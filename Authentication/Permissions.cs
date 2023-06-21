@@ -91,7 +91,7 @@ namespace AdminBlazor.Authentication
 
             foreach (var item in permissions)
             {
-                if(item.IsMenu && rolePermissions.Any(t=>t == item.Key))
+                if(item.IsMenu && rolePermissions.Any(t=>t.StartsWith(item.Key)))
                 {
                     var model = new MenuDataItem
                     {

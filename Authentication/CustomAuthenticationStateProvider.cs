@@ -35,6 +35,7 @@ namespace AdminBlazor.Authentication
                         {
                             new Claim(ClaimTypes.Name,userSession.UserName),
                             new Claim(ClaimTypes.Role,userSession.Role),
+                            new Claim(ClaimTypes.Authentication,userSession.Permissions)
                         };
                 //var permissions = await _user.GetPermissions(userSession.Role);
 
@@ -67,7 +68,8 @@ namespace AdminBlazor.Authentication
                 claimsPrincipal = new ClaimsPrincipal(new ClaimsIdentity(new List<Claim>
                 {
                     new Claim(ClaimTypes.Name,userSession.UserName),
-                    new Claim(ClaimTypes.Role,userSession.Role)
+                    new Claim(ClaimTypes.Role,userSession.Role),
+                    new Claim(ClaimTypes.Authentication,userSession.Permissions)
                 }));
             }
             else
