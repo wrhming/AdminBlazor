@@ -6,9 +6,9 @@
 @inject UserAccountService _user;
 
 <AntDesign.ProLayout.BasicLayout Logo="@("https://gw.alipayobjects.com/zos/rmsportal/KDpgvguMpGfqaHPjicRK.svg")"
-                                 MenuData="_menuData.ToArray()">
+                                 MenuData="_menuData.ToArray()"  >
     <RightContentRender>
-
+          <AdminBlazor.Components.GlobalHeader.RightContent></AdminBlazor.Components.GlobalHeader.RightContent>
     </RightContentRender>
     <ChildContent>
         @Body

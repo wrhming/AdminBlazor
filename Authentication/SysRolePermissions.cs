@@ -1,10 +1,12 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using Microsoft.EntityFrameworkCore;
+using System.ComponentModel.DataAnnotations;
 
 namespace AdminBlazor.Authentication
 {
     /// <summary>
     /// 角色权限表
     /// </summary>
+    [Index(nameof(PermissionName), IsUnique = true)]
     public class SysRolePermissions
     {
         public int Id { get; set; }

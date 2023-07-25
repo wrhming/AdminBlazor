@@ -1,0 +1,127 @@
+﻿@inherits AntDomComponentBase
+@inject AuthenticationStateProvider authStateProvider
+
+<Space Class="@ClassMapper.Class" Size="@("24")">
+    <SpaceItem>
+
+        <NoticeIcon ClearText="清空"
+                    ViewMoreText="查看更多"
+                    Count="_count"
+                    OnClear="HandleClear"
+                    OnViewMore="HandleViewMore">
+                    
+            <NoticeList TabKey="message" 
+                        Title="消息"
+                        EmptyText="您已阅读所有消息"
+                        ShowViewMore
+                        Data="_messages" />
+        </NoticeIcon>
+    </SpaceItem>
+    <SpaceItem>
+        <AuthorizeView>
+            <Authorized>
+                <AvatarDropdown Name="@context.User.Identity.Name" Avatar="/images/default.png"
+                                MenuItems="@AvatarMenuItems"
+                                OnItemSelected="HandleSelectUser" />
+            </Authorized>
+            <NotAuthorized>
+                <h1>Hello,Guest!</h1>
+            </NotAuthorized>
+        </AuthorizeView>
+        
+    </SpaceItem>
+</Space>
+
+@code {
+    private NoticeIconData[] _messages = { };
+    private int _count = 0;
+
+    public AvatarMenuItem[] AvatarMenuItems { get; set; } = new AvatarMenuItem[]
+    {
+            new() { Key = "setting", IconType = "setting", Option = "个人设置"},
+            new() { IsDivider = true },
+            new() { Key = "logout", IconType = "logout", Option = "退出登录"}
+    };
+
+    [Inject] protected NavigationManager NavigationManager { get; set; }
+
+    [Inject] protected MessageService MessageService { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+        SetClassMap();
+
+        _messages = new List<NoticeIconData>
+        {
+            new NoticeIconData
+            {
+                Title = "消息标题1",
+                Extra = "消息111111描述消息描述消息描述消息描述消息描述消息描述",
+                Key = "1",
+                Datetime = DateTime.Now,                
+            },new NoticeIconData
+            {
+                Title = "消息标题2",
+                Extra = "消息2222描述消息描述消息描述消息描述消息描述消息描述",
+                Key = "2",
+                Datetime = DateTime.Now,
+            },new NoticeIconData
+            {
+                Title = "消息标题3",
+                Extra = "消息333333描述消息描述消息描述消息描述消息描述消息描述",
+                Key = "3",
+                Datetime = DateTime.Now,
+            },new NoticeIconData
+            {
+                Title = "消息标题4",
+                Extra = "消息44444描述消息描述消息描述消息描述消息描述消息描述",
+                Key = "4",
+                Datetime = DateTime.Now,
+            },
+        }.ToArray();
+        _count = _messages.Length;
+    }
+
+    protected void SetClassMap()
+    {
+        ClassMapper
+            .Clear()
+            .Add("right");
+    }
+
+    public async Task HandleSelectUser(MenuItem item)
+    {
+        switch (item.Key)
+        {
+            case "setting":
+                NavigationManager.NavigateTo("/account/settings");
+                break;
+            case "logout":
+                var customAuthStateProvider = (CustomAuthenticationStateProvider)authStateProvider;
+                await customAuthStateProvider.UpdateAuthenticationState(null);
+                NavigationManager.NavigateTo("/user/login");
+                break;
+        }
+    }
+
+    public void HandleSelectLang(MenuItem item)
+    {
+    }
+
+    public async Task HandleClear(string key)
+    {
+        switch (key)
+        {
+            case "message":
+                _messages = new NoticeIconData[] { };
+                break;
+        }
+        await MessageService.Success($"清空了{key}");
+    }
+
+    public async Task HandleViewMore(string key)
+    {
+        await MessageService.Info("Click on view more");
+    }
+}

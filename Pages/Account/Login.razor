@@ -4,6 +4,7 @@
 @inject NavigationManager _navManager;
 @inject AuthenticationStateProvider authStateProvider
 @page "/user/login"
+@using Microsoft.AspNetCore.Identity;
 
 <div class="main__b__0">
     <div class="login">
@@ -39,17 +40,20 @@
     void toggle(bool value) => loading = value;
     public async Task HandleSubmit()
     {
+        //UserManager.PasswordHasher.HashPassword("");
         //异步需要更新页面状态
         loading = true;
         StateHasChanged();
         await Task.Delay(100);
 
 
-        loading = false;
-        StateHasChanged();
+        
 
         var userAccount = await userAccountService.GetUserName(_model.UserName);
-        if (userAccount == null || userAccount.Password != _model.Password)
+
+        loading = false;
+        StateHasChanged();
+        if (userAccount == null || PasswordHasher.VerifyHashedPassword(_model.Password, userAccount.Password)==false)
         {
             await _msg.Error("登录失败");
         }

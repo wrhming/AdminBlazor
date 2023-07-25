@@ -1,4 +1,5 @@
 ﻿using AdminBlazor.Data;
+using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,10 +12,12 @@ namespace AdminBlazor.Authentication
         //private List<SysUser> _users;
 
         private readonly ApplicationDbContext _dbContext;
+        private readonly ProtectedSessionStorage _sessionStorage;
 
-        public UserAccountService(ApplicationDbContext dbContext)
+        public UserAccountService(ApplicationDbContext dbContext, ProtectedSessionStorage sessionStorage)
         {
             _dbContext = dbContext;
+            _sessionStorage = sessionStorage;
         }
 
         //public UserAccountService()
@@ -53,5 +56,21 @@ namespace AdminBlazor.Authentication
             return role.Permissions.Select(t=>t.PermissionName).ToList();
         }
 
+        /// <summary>
+        /// 获得当前用户信息
+        /// </summary>
+        /// <returns></returns>
+        public async Task<SysUser> GetCurrentUser()
+        {
+            var userSessionStorageResult = await _sessionStorage.GetAsync<UserSession>("UserSession");
+            if(userSessionStorageResult.Success == true && userSessionStorageResult.Value != null)
+            {
+                var user = await _dbContext.SysUser.FirstOrDefaultAsync(t=>t.UserName == userSessionStorageResult.Value.UserName);
+
+                return user;
+            }
+
+            return null;
+        }
     }
 }

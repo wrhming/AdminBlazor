@@ -1,8 +1,10 @@
-﻿using System.Collections.Generic;
+﻿using Microsoft.EntityFrameworkCore;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
 namespace AdminBlazor.Authentication
 {
+    [Index(nameof(RoleName), IsUnique = true)]
     public class SysRole
     {
         public int Id { get; set; }

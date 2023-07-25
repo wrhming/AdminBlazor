@@ -1,0 +1,59 @@
+﻿<div class="baseView">
+    <div class="left" style="min-width: 310px;">
+        <Form 
+            Layout="vertical"
+            OnFinish="HandleFinish"
+            Model="@_currentUser">
+            <FormItem Label="用户名">
+                <AntDesign.Input @bind-Value="@context.UserName" ReadOnly />
+            </FormItem>
+            <FormItem Label="真实姓名">
+                <AntDesign.Input @bind-Value="@context.RealName" />
+            </FormItem>
+            <FormItem Label="手机号">
+                <AntDesign.Input @bind-Value="@context.Telephone" ReadOnly />
+            </FormItem>
+            <FormItem>
+                <Button HtmlType="submit" Type="primary">
+                    更新信息
+                </Button>
+            </FormItem>
+        </Form>
+    </div>
+    <div class="right__b__1">
+        <div class="avatar_title">
+            头像
+        </div>
+        <div class="avatar">
+            <img src="@avatar" alt="avatar" />
+        </div>
+        <Upload ShowUploadList="false">
+            <div class="button_view">
+                <Button Icon="upload">
+                    修改头像
+                </Button>
+            </div>
+        </Upload>
+    </div>
+</div>
+
+@code {
+    private SysUser _currentUser = new SysUser();
+    string avatar = "/images/default.png";
+
+    [Inject] protected UserAccountService UserService { get; set; }
+
+    private void HandleFinish()
+    {
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+        _currentUser = await UserService.GetCurrentUser();
+        if (string.IsNullOrEmpty(_currentUser.Avatar) == false)
+        {
+            avatar = _currentUser.Avatar;
+        }
+    }
+}
