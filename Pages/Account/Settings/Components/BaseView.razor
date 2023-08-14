@@ -27,7 +27,7 @@
         <div class="avatar">
             <img src="@avatar" alt="avatar" />
         </div>
-        <Upload ShowUploadList="false">
+        <Upload ShowUploadList="false" OnChange="OnSingleCompleted">
             <div class="button_view">
                 <Button Icon="upload">
                     修改头像
@@ -54,6 +54,15 @@
         if (string.IsNullOrEmpty(_currentUser.Avatar) == false)
         {
             avatar = _currentUser.Avatar;
+        }
+    }
+
+    void OnSingleCompleted(UploadInfo fileinfo)
+    {
+        if (fileinfo.File.State == UploadState.Success)
+        {
+            //var result = fileinfo.File.GetResponse<ResponseModel>();
+            //fileinfo.File.Url = result.url;
         }
     }
 }

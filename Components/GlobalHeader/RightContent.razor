@@ -3,19 +3,9 @@
 
 <Space Class="@ClassMapper.Class" Size="@("24")">
     <SpaceItem>
-
-        <NoticeIcon ClearText="清空"
-                    ViewMoreText="查看更多"
-                    Count="_count"
-                    OnClear="HandleClear"
-                    OnViewMore="HandleViewMore">
-                    
-            <NoticeList TabKey="message" 
-                        Title="消息"
-                        EmptyText="您已阅读所有消息"
-                        ShowViewMore
-                        Data="_messages" />
-        </NoticeIcon>
+        <Badge Count="_count" Offset="(6, 0)" Size="small" >
+            <Icon Type="bell" Theme="outline" Style="cursor:pointer;" @onclick="ToMessage" />
+        </Badge>
     </SpaceItem>
     <SpaceItem>
         <AuthorizeView>
@@ -33,7 +23,6 @@
 </Space>
 
 @code {
-    private NoticeIconData[] _messages = { };
     private int _count = 0;
 
     public AvatarMenuItem[] AvatarMenuItems { get; set; } = new AvatarMenuItem[]
@@ -52,35 +41,7 @@
         await base.OnInitializedAsync();
         SetClassMap();
 
-        _messages = new List<NoticeIconData>
-        {
-            new NoticeIconData
-            {
-                Title = "消息标题1",
-                Extra = "消息111111描述消息描述消息描述消息描述消息描述消息描述",
-                Key = "1",
-                Datetime = DateTime.Now,                
-            },new NoticeIconData
-            {
-                Title = "消息标题2",
-                Extra = "消息2222描述消息描述消息描述消息描述消息描述消息描述",
-                Key = "2",
-                Datetime = DateTime.Now,
-            },new NoticeIconData
-            {
-                Title = "消息标题3",
-                Extra = "消息333333描述消息描述消息描述消息描述消息描述消息描述",
-                Key = "3",
-                Datetime = DateTime.Now,
-            },new NoticeIconData
-            {
-                Title = "消息标题4",
-                Extra = "消息44444描述消息描述消息描述消息描述消息描述消息描述",
-                Key = "4",
-                Datetime = DateTime.Now,
-            },
-        }.ToArray();
-        _count = _messages.Length;
+        _count = 5;
     }
 
     protected void SetClassMap()
@@ -105,23 +66,8 @@
         }
     }
 
-    public void HandleSelectLang(MenuItem item)
+    public void ToMessage()
     {
-    }
-
-    public async Task HandleClear(string key)
-    {
-        switch (key)
-        {
-            case "message":
-                _messages = new NoticeIconData[] { };
-                break;
-        }
-        await MessageService.Success($"清空了{key}");
-    }
-
-    public async Task HandleViewMore(string key)
-    {
-        await MessageService.Info("Click on view more");
+        NavigationManager.NavigateTo("/message/list");
     }
 }
