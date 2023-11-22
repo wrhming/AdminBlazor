@@ -55,12 +55,10 @@
     {
         switch (item.Key)
         {
-            //设置
-            case "setting":
+            case "setting"://设置
                 NavigationManager.NavigateTo("/account/settings");
                 break;
-            case "logout":
-            //退出
+            case "logout"://退出
                 var customAuthStateProvider = (CustomAuthenticationStateProvider)authStateProvider;
                 await customAuthStateProvider.UpdateAuthenticationState(null);
                 NavigationManager.NavigateTo("/user/login");
