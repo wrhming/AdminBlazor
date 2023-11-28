@@ -50,6 +50,7 @@
                            @* <AuthorizeView Context="authContext" Policy="@PermissionNames.RoleAuth">
                                 <Button Type="@ButtonType.Link" Danger OnClick="()=>Delete(context.Id)">权限</Button>
                             </AuthorizeView>*@
+
                             <Button Type="@ButtonType.Link" OnClick="()=>HandelEdit(context.Id)">修改</Button>
 
                             <Popconfirm Title="你确定删除吗?" OkText="确定" CancelText="取消"
@@ -208,7 +209,7 @@
                 }).ToList();
 
             await _dbContext.SaveChangesAsync(); 
-            await _msg.Success("添加成功");
+            await _msg.Success("添加成功  ");
         }
     }
 
